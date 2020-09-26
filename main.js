@@ -1,9 +1,12 @@
 const {
   app,
   BrowserWindow,
-  Menu
+  Menu,
+  ipcMain,
+  Notification
 } = require('electron')
-const log = require('electron-log')
+const log = require('electron-log');
+let notifications;
 
 // Set env
 process.env.NODE_ENV = 'development'
@@ -34,6 +37,9 @@ function createMainWindow() {
 }
 
 app.on('ready', () => {
+
+  notifications = new Notification();
+
   createMainWindow()
 
   const mainMenu = Menu.buildFromTemplate(menu)
@@ -72,9 +78,20 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
+
   if (BrowserWindow.getAllWindows().length === 0) {
     createMainWindow()
   }
 })
 
+
+
+ipcMain.on('alert', (e,message) => {
+  notifications.title = message.title
+  notifications.body = message.message
+  notifications.show();
+})
+
 app.allowRendererProcessReuse = true
+
+app.setAppUserModelId(process.execPath)

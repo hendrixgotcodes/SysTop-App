@@ -87,7 +87,6 @@ function lastNotified(timeElapsed) {
     lastNotified = new Date(parseInt(lastNotified));
     let dateDiff = Math.abs(now - lastNotified);
     dateDiff = Math.ceil(dateDiff / (1000 * 60));
-    console.log(dateDiff);
 
     if (dateDiff > timeElapsed) {
       localStorage.setItem("last_notified", +new Date());

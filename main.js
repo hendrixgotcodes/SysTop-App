@@ -8,6 +8,16 @@ const {
 const log = require('electron-log');
 let notifications;
 
+const STORE = require('./app/js/store');
+
+const store = new STORE({configName: 'settings', defaults: {
+    settings:{
+      cpuOverload: 90,
+      alertFreq: 1
+    }
+}});
+
+
 // Set env
 process.env.NODE_ENV = 'development'
 
@@ -34,6 +44,16 @@ function createMainWindow() {
   }
 
   mainWindow.loadFile('./app/index.html')
+
+  mainWindow.webContents.on('dom-ready',()=>{
+    mainWindow.webContents.send('get-settings',store.get('settings'))
+  });
+
+  ipcMain.on('save-settings', (e, settings)=>{
+    store.set('settings', settings);
+
+    mainWindow.webContents.send('get-settings', store.get('settings'));
+  });
 }
 
 app.on('ready', () => {

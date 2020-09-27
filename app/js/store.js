@@ -7,7 +7,9 @@ class STORE {
     constructor(opts) {
         const userDataPath = (electron.app || electron.remote.app).getPath('userData');
         this.path = path.join(userDataPath, opts.configName + '.json');
-        this.data = parseData(path, opts.defaults);
+
+        console.log(this.path);
+        this.data = parseData(this.path, opts.defaults);
     }
 
     get(KEY) {
@@ -20,6 +22,7 @@ class STORE {
 
             fs.writeFileSync(this.path, JSON.stringify(this.data));
 
+
         } catch (error) {
             console.log(error);
         }
@@ -27,14 +30,14 @@ class STORE {
 
 }
 
-function parseData(path, defaults){
+function parseData(path, defaults) {
     try {
 
         return JSON.parse(fs.readFileSync(path))
-        
+
     } catch (error) {
-        console.log(error);    
-        return defaults;    
+        console.log(error);
+        return defaults;
     }
 }
 

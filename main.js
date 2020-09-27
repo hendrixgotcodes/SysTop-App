@@ -40,6 +40,8 @@ app.on('ready', () => {
 
   notifications = new Notification();
 
+  console.log(app.getPath('logs'));
+
   createMainWindow()
 
   const mainMenu = Menu.buildFromTemplate(menu)

@@ -3,23 +3,31 @@ const {
   BrowserWindow,
   Menu,
   ipcMain,
-  Notification
+  Notification,
+  Tray
 } = require('electron')
 const log = require('electron-log');
 let notifications;
+const path = require('path');
+
+let tray;
+let icon = path.join(__dirname, 'assets', 'icons', 'tray_icon.png');
 
 const STORE = require('./app/js/store');
 
-const store = new STORE({configName: 'settings', defaults: {
-    settings:{
+const store = new STORE({
+  configName: 'settings',
+  defaults: {
+    settings: {
       cpuOverload: 90,
       alertFreq: 1
     }
-}});
+  }
+});
 
 
 // Set env
-process.env.NODE_ENV = 'development'
+process.env.NODE_ENV = 'production'
 
 const isDev = process.env.NODE_ENV !== 'production' ? true : false
 const isMac = process.platform === 'darwin' ? true : false
@@ -31,12 +39,13 @@ function createMainWindow() {
     title: 'APP NAME',
     width: isDev ? 800 : 500,
     height: 600,
-    icon: `${__dirname}/assets/icons/icon.png`,
+    icon: icon,
     resizable: isDev ? true : false,
     backgroundColor: 'white',
     webPreferences: {
       nodeIntegration: true,
     },
+    opacity: 0.98
   })
 
   if (isDev) {
@@ -45,14 +54,15 @@ function createMainWindow() {
 
   mainWindow.loadFile('./app/index.html')
 
-  mainWindow.webContents.on('dom-ready',()=>{
-    mainWindow.webContents.send('get-settings',store.get('settings'))
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.send('get-settings', store.get('settings'))
   });
 
-  ipcMain.on('save-settings', (e, settings)=>{
+  ipcMain.on('save-settings', (e, settings) => {
     store.set('settings', settings);
 
     mainWindow.webContents.send('get-settings', store.get('settings'));
+
   });
 }
 
@@ -66,7 +76,41 @@ app.on('ready', () => {
 
   const mainMenu = Menu.buildFromTemplate(menu)
   Menu.setApplicationMenu(mainMenu)
+
+  const trayMenuTemplate = [{
+    label: 'Close Systop',
+    click: (e) => {
+      app.isQuitting = true;
+      app.quit();
+    }
+  }]
+  const trayMenu = Menu.buildFromTemplate(trayMenuTemplate)
+
+  tray = new Tray(icon);
+  tray.on("click", () => {
+    if (mainWindow.isVisible() === true) {
+      mainWindow.hide();
+    } else {
+      mainWindow.show();
+    }
+  })
+  tray.setContextMenu(trayMenu);
+
+  mainWindow.on("close",(e)=>{
+  
+    if(!app.isQuitting){
+    e.preventDefault();
+      mainWindow.hide();
+      return false
+    }
+    
+    return true
+  
+  
+  })
+  
 })
+
 
 const menu = [
   ...(isMac ? [{
@@ -108,7 +152,7 @@ app.on('activate', () => {
 
 
 
-ipcMain.on('alert', (e,message) => {
+ipcMain.on('alert', (e, message) => {
   notifications.title = message.title
   notifications.body = message.message
   notifications.show();
